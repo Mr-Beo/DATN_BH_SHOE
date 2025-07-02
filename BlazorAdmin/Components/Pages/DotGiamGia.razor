@@ -1,0 +1,75 @@
+﻿@page "/DotGiamGia"
+@using Data.Models
+@using BlazorAdmin.Service.IService
+@layout AdminLayout
+@inject IGiamGiaService GiamGiaService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<link href="/css/site.css" rel="stylesheet" />
+
+<h3 class="mb-3">🎯 Quản lý Đợt Giảm Giá</h3>
+
+<div class="card shadow-sm p-4">
+    <div class="d-flex justify-content-between mb-3">
+        <input class="form-control w-50" placeholder="🔍 Tìm tên đợt..." @bind="searchTerm" @bind:event="oninput" />
+        <button class="btn btn-warning" @onclick='() => Navigation.NavigateTo("/ThemDotGiamGia")'>➕ Thêm đợt</button>
+    </div>
+
+    <table class="table table-bordered table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>#</th>
+                <th>Tên</th>
+                <th>Thời gian</th>
+                <th>Giảm (%)</th>
+                <th>Trạng thái</th>
+                <th>Giày áp dụng</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (PagedList.Count == 0)
+            {
+                <tr><td colspan="7" class="text-center text-muted">Không có dữ liệu.</td></tr>
+            }
+            else
+            {
+                @foreach (var (item, index) in PagedList.Select((x, i) => (x, i)))
+                {
+                    <tr>
+                        <td>@((CurrentPage - 1) * PageSize + index + 1)</td>
+                        <td>@item.TenGiamGia</td>
+                        <td>@item.NgayBatDau:dd/MM/yyyy - @item.NgayKetThuc:dd/MM/yyyy</td>
+                        <td>@item.PhanTramKhuyenMai%</td>
+                        <td><span class="badge bg-@(item.TrangThai ? "success" : "secondary")">@(item.TrangThai ? "Hiển thị" : "Ẩn")</span></td>
+                        <td>@(item.GiayDotGiamGias?.Count ?? 0)</td>
+                        <td>
+                            <i class="bi bi-pencil-square text-warning me-2"
+                               @onclick='@(() => Navigation.NavigateTo($"/ThemDotGiamGia/{item.GiamGiaId}"))'
+                               title="Sửa"></i>
+                            <i class="bi bi-link text-success" title="Thêm giày"></i>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<GiamGia> all = new();
+    private string searchTerm = "";
+    private int CurrentPage = 1;
+    private int PageSize = 10;
+
+    private List<GiamGia> Filtered => all.Where(x =>
+        string.IsNullOrWhiteSpace(searchTerm) || x.TenGiamGia.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    private List<GiamGia> PagedList => Filtered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        all = (await GiamGiaService.GetAllAsync()).ToList();
+    }
+}

@@ -1,0 +1,82 @@
+﻿@page "/Admin/AddVoucher"
+@rendermode InteractiveServer
+
+@using Data.Models
+@using BlazorAdmin.Service.IService
+@using System.ComponentModel.DataAnnotations
+
+@inject IVoucherService service
+@inject NavigationManager manager
+
+<h3>Thêm Voucher mới</h3>
+
+<EditForm Model="Input" OnValidSubmit="SubmitFormCreate">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Tên Voucher:</label>
+        <InputText class="form-control" @bind-Value="Input.TenVoucher" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Ngày bắt đầu:</label>
+        <InputDate class="form-control" @bind-Value="Input.NgayBatDau" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Ngày kết thúc:</label>
+        <InputDate class="form-control" @bind-Value="Input.NgayKetThuc" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Phần trăm giảm:</label>
+        <InputNumber class="form-control" @bind-Value="Input.PhanTram" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Số lượng:</label>
+        <InputNumber class="form-control" @bind-Value="Input.SoLuong" />
+    </div>
+
+    <button type="submit" class="btn btn-success">Thêm mới</button>
+</EditForm>
+
+@code {
+    private InputModel Input { get; set; } = new();
+
+    private async Task SubmitFormCreate()
+    {
+        var newVoucher = new Voucher
+        {
+            VoucherId = Guid.NewGuid(),
+            TenVoucher = Input.TenVoucher,
+            NgayBatDau = Input.NgayBatDau,
+            NgayKetThuc = Input.NgayKetThuc,
+            PhanTram = Input.PhanTram,
+            TrangThai = true,
+            SoLuong = Input.SoLuong
+        };
+
+        await service.Add(newVoucher);
+        manager.NavigateTo("/Admin/voucher");
+    }
+
+    private sealed class InputModel
+    {
+        [Required(ErrorMessage = "Tên voucher không được bỏ trống")]
+        public string TenVoucher { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Vui lòng chọn ngày bắt đầu")]
+        public DateTime NgayBatDau { get; set; } = DateTime.Today;
+
+        [Required(ErrorMessage = "Vui lòng chọn ngày kết thúc")]
+        public DateTime NgayKetThuc { get; set; } = DateTime.Today.AddDays(7);
+
+        [Range(0, 100, ErrorMessage = "Phần trăm giảm phải từ 0 đến 100")]
+        public float PhanTram { get; set; }
+
+        [Range(1, int.MaxValue, ErrorMessage = "Số lượng phải lớn hơn 0")]
+        public int SoLuong { get; set; }
+    }
+}
